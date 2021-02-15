@@ -1,27 +1,34 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const routes = require("./routes");
+const morgan = require("morgan");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 
-// Create server
+// use methods libs.
 const app = express();
+require("dotenv").config();
+
+// middlewares
+app.use(morgan("dev"));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
 
 // connect to mongo
 mongoose.Promise = global.Promise;
-mongoose.connect("mongodb://localhost:27017/sublimedia", {
+mongoose.connect(process.env.DATABASE, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,
+  useCreateIndex: true,
 });
 
-// Enable body parser
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
 // enable routing
-app.use("/", routes());
+app.use("/api/category", require("./routes/category"));
+app.use("/api/product", require("./routes/product"));
+app.use("/api/auth", require("./routes/auth"));
 
 // port and start server
-app.listen(4000, () => {
+app.listen(process.env.PORT, () => {
   console.log("Funcionando correctamente");
 });

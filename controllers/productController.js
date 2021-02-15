@@ -1,35 +1,75 @@
 const Product = require("../models/Product");
+const { errorHandler } = require("../helpers/dberrorHandler");
+const fs = require("fs");
+const formidable = require("formidable");
 
-// Create new Product
-exports.newProduct = async (req, res, next) => {
-  // create object Product
-  const product = new Product(req.body);
+// Create new product
+exports.newProduct = (req, res) => {
+  let form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      return res.status(400).json({
+        error: "Hubó un error al subir la imagen",
+      });
+    }
+    const { name, description, price, category, quantity } = fields;
+    let product = new Product(fields);
 
-  try {
-    await product.save();
-    res.json({ message: "El producto se agregó" });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+    if (files.photo) {
+      if (files.photo.size > 1000000) {
+        return res.status(400).json({
+          error: "La imagen debe ser menor de 1MB",
+        });
+      }
+      product.photo.data = fs.readFileSync(files.photo.path);
+      product.photo.contentType = files.photo.type;
+    }
+    product.save((err, result) => {
+      if (err) {
+        return res.status(400).json({
+          error: errorHandler(error),
+        });
+      }
+      res.json({ message: "Se agregó satisfactoriamente" }, result);
+    });
+  });
 };
 
 // Get all products
-exports.getproducts = async (req, res, next) => {
-  try {
-    const products = await Product.find({});
-    res.json(products);
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+exports.getProducts = (req, res) => {
+  let order = req.query.order ? req.query.order : "asc";
+  let sortBy = req.query.sortBy ? req.query.sortBy : "name";
+
+  Product.find()
+    .populate("category")
+    .sort([[sortBy, order]])
+    .exec((err, products) => {
+      if (err) {
+        return res.status(400).json({
+          error: "El producto no se encontro",
+        });
+      }
+      res.json(products);
+    });
 };
 
-// Get one Product
+// exports.read = (req, res) => {
+//   req.product.photo = undefined;
+//   return res.json(req.product);
+// };
+
+// Get one product
 exports.getProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
-    res.json(product);
+    await Product.findById(req.params.id).exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: errorHandler(err),
+        });
+      }
+      res.json(data);
+    });
   } catch (error) {
     console.log(error);
     next();
@@ -39,27 +79,57 @@ exports.getProduct = async (req, res, next) => {
 // Update product
 exports.updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findOneAndUpdate(
-      { _id: req.params.id },
-      req.body,
-      {
-        new: true,
+    await Product.findOneAndUpdate({ _id: req.params.id }, req.body, {
+      new: true,
+    }).exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: errorHandler(err),
+        });
       }
-    );
-    res.json(product);
+      res.json({ message: "Se actualizó satisfactoriamente" }, data);
+    });
   } catch (error) {
     console.log(error);
     next();
   }
 };
 
+exports.id = (req, res, next, id) => {
+  Product.findById(id)
+    .populate("category")
+    .exec((err, product) => {
+      if (err || !product) {
+        return res.status(400).json({
+          error: "product not found",
+        });
+      }
+      req.product = product;
+      next();
+    });
+};
+
 // Delete product
 exports.deleteProduct = async (req, res, next) => {
   try {
-    await Product.findOneAndDelete({ _id: req.params.id });
-    res.json({ message: "El producto fue eliminada" });
+    await Product.findOneAndDelete({ _id: req.params.id }).exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: errorHandler(err),
+        });
+      }
+      res.json({ message: "Se eliminó satisfactoriamente" });
+    });
   } catch (error) {
     console.log(error);
     next();
   }
+};
+
+exports.photo = (req, res, next) => {
+  if (req.product.photo.data) {
+    res.set("Content-Type", req.product.photo.contentType);
+    return res.send(req.product.photo.data);
+  }
+  next();
 };
