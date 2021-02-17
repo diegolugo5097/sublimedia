@@ -5,36 +5,17 @@ const formidable = require("formidable");
 
 // sign up
 exports.signup = (req, res) => {
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
-  form.parse(req, (err, fields, files) => {
-    if (err) {
+  const user = new User(req.body);
+  user.save((error, user) => {
+    if (error) {
       return res.status(400).json({
-        error: "Hubó un error al subir la imagen",
+        error: "Error",
       });
     }
-    const { name, username, email, role } = fields;
-    let user = new User(fields);
-    if (files.photo) {
-      if (files.photo.size > 1000000) {
-        return res.status(400).json({
-          error: "La imagen debe ser menor de 1MB",
-        });
-      }
-      user.photo.data = fs.readFileSync(files.photo.path);
-      user.photo.contentType = files.photo.type;
-    }
-    user.save((error, user) => {
-      if (error) {
-        return res.status(400).json({
-          error: "Error",
-        });
-      }
-      user.salt = undefined;
-      user.hashed_password = undefined;
-      res.json({
-        user,
-      });
+    user.salt = undefined;
+    user.hashed_password = undefined;
+    res.json({
+      user,
     });
   });
 };
@@ -63,4 +44,10 @@ exports.signin = (req, res) => {
     const { _id, name, email, role } = user;
     return res.json({ token, user: { _id, email, name, role } });
   });
+};
+
+// Signout
+exports.signout = (req, res) => {
+  res.clearCookie("t");
+  res.json({ message: "Se cerró la sesión" });
 };

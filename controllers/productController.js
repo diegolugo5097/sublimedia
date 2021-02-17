@@ -28,16 +28,17 @@ exports.newProduct = (req, res) => {
     product.save((err, result) => {
       if (err) {
         return res.status(400).json({
-          error: errorHandler(error),
+          error: { message: "Error al registrar el producto" },
         });
       }
-      res.json({ message: "Se agregó satisfactoriamente" }, result);
+      res.json({ message: "Se agregó satisfactoriamente" });
     });
   });
 };
 
 // Get all products
 exports.getProducts = (req, res) => {
+  console.log(req);
   let order = req.query.order ? req.query.order : "asc";
   let sortBy = req.query.sortBy ? req.query.sortBy : "name";
 
