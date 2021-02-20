@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
+const errorHandler = require("../helpers/dberrorHandler");
 const formidable = require("formidable");
 
 // sign up
@@ -18,6 +19,22 @@ exports.signup = (req, res) => {
       user,
     });
   });
+};
+
+exports.getUsers = async (req, res, next) => {
+  try {
+    await User.find().exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: errorHandler(err),
+        });
+      }
+      res.json(data);
+    });
+  } catch (error) {
+    console.log(error);
+    next();
+  }
 };
 
 // sign in / login
