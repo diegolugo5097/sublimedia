@@ -1,8 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
 const errorHandler = require("../helpers/dberrorHandler");
-const formidable = require("formidable");
 
 // sign up
 exports.signup = (req, res) => {

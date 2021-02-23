@@ -1,72 +1,53 @@
 const AboutUs = require("../models/AboutUs");
-const { errorHandler } = require("../helpers/dberrorHandler");
+const mongoose = require("mongoose");
 
-exports.newAboutUs = async (req, res, next) => {
+exports.getAboutUs = async (req, res) => {
   try {
-    const aboutUs = new AboutUs(req.body);
-    await aboutUs.save((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se creó satisfactoriamente" });
-    });
+    const aboutUs = await AboutUs.find();
+    res.status(200).json(aboutUs);
   } catch (error) {
-    console.log(error);
-    next();
+    res.status(404).json({
+      message: error.message,
+    });
   }
 };
 
-// Get all about us
-exports.getAboutUs = async (req, res, next) => {
+exports.createAboutUs = async (req, res) => {
+  const aboutUs = req.body;
+  const aboutUs = new AboutUs(aboutUs);
   try {
-    await AboutUs.find().exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json(data);
-    });
+    await aboutUs.save();
+    res.status(201).json(aboutUs);
   } catch (error) {
-    console.log(error);
-    next();
+    res.status(409).json({
+      message: error.message,
+    });
   }
 };
 
-// Update about us
-exports.updateAbout = async (req, res, next) => {
-  try {
-    await AboutUs.findOneAndUpdate({ _id: req.params.id }, req.body, {
+exports.updateAboutUs = async (req, res) => {
+  const { id: _id } = req.params;
+  const aboutUs = req.body;
+  if (!mongoose.Types.ObjectId.isValid(_id))
+    return res.status(404).send("Hubó un problema al actualizar");
+
+  const updatedAboutUs = await AboutUs.findByIdAndUpdate(
+    _id,
+    { ...aboutUs, _id },
+    {
       new: true,
-    }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se actualizó satisfactoriamente " });
-    });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+    }
+  );
+  res.json(updatedAboutUs);
 };
 
-// Delete about us
-exports.deleteAboutUs = async (req, res, next) => {
-  try {
-    await AboutUs.findOneAndDelete({ _id: req.params.id }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se eliminó satisfactoriamente" });
-    });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+exports.deleteAboutUs = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).send("Hubó un problema al eliminar");
+
+  await AboutUs.findByIdAndDelete(id);
+
+  res.json({ message: "Ha sido eliminado" });
 };

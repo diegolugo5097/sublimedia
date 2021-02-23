@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const { ObjectId } = mongoose.Schema;
 
 const productSchema = new Schema(
   {
@@ -24,16 +23,13 @@ const productSchema = new Schema(
       maxlength: 32,
     },
     category: {
-      type: ObjectId,
-      ref: "Category",
-      require: true,
+      type: String,
     },
     quantity: {
       type: Number,
     },
-    photo: {
-      data: Buffer,
-      contentType: String,
+    image: {
+      type: String,
     },
   },
   { timestamps: true }

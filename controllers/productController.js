@@ -1,136 +1,53 @@
 const Product = require("../models/Product");
-const { errorHandler } = require("../helpers/dberrorHandler");
-const fs = require("fs");
-const formidable = require("formidable");
+const mongoose = require("mongoose");
 
-// Create new product
-exports.newProduct = (req, res) => {
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
-  form.parse(req, (err, fields, files) => {
-    if (err) {
-      return res.status(400).json({
-        error: "Hubó un error al subir la imagen",
-      });
-    }
-    const { name, description, price, category, quantity } = fields;
-    let product = new Product(fields);
-
-    if (files.photo) {
-      if (files.photo.size > 1000000) {
-        return res.status(400).json({
-          error: "La imagen debe ser menor de 1MB",
-        });
-      }
-      product.photo.data = fs.readFileSync(files.photo.path);
-      product.photo.contentType = files.photo.type;
-    }
-    product.save((err, result) => {
-      if (err) {
-        return res.status(400).json({
-          error: { message: "Error al registrar el producto" },
-        });
-      }
-      res.json({ message: "Se agregó satisfactoriamente" });
-    });
-  });
-};
-
-// Get all products
-exports.getProducts = (req, res) => {
-  console.log(req);
-  let order = req.query.order ? req.query.order : "asc";
-  let sortBy = req.query.sortBy ? req.query.sortBy : "name";
-
-  Product.find()
-    .populate("category")
-    .sort([[sortBy, order]])
-    .exec((err, products) => {
-      if (err) {
-        return res.status(400).json({
-          error: "El producto no se encontro",
-        });
-      }
-      res.json(products);
-    });
-};
-
-// exports.read = (req, res) => {
-//   req.product.photo = undefined;
-//   return res.json(req.product);
-// };
-
-// Get one product
-exports.getProduct = async (req, res, next) => {
+exports.getProducts = async (req, res) => {
   try {
-    await Product.findById(req.params.id).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json(data);
-    });
+    const product = await Product.find();
+    res.status(200).json(product);
   } catch (error) {
-    console.log(error);
-    next();
+    res.status(404).json({
+      message: error.message,
+    });
   }
 };
 
-// Update product
-exports.updateProduct = async (req, res, next) => {
+exports.createProduct = async (req, res) => {
+  const product = req.body;
+  const newProduct = new Product(product);
   try {
-    await Product.findOneAndUpdate({ _id: req.params.id }, req.body, {
+    await newProduct.save();
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(409).json({
+      message: error.message,
+    });
+  }
+};
+
+exports.updateProduct = async (req, res) => {
+  const { id: _id } = req.params;
+  const product = req.body;
+  if (!mongoose.Types.ObjectId.isValid(_id))
+    return res.status(404).send("Hubó un problema al actualizar el producto");
+
+  const updatedProduct = await Product.findByIdAndUpdate(
+    _id,
+    { ...product, _id },
+    {
       new: true,
-    }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se actualizó satisfactoriamente" }, data);
-    });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+    }
+  );
+  res.json(updatedProduct);
 };
 
-exports.id = (req, res, next, id) => {
-  Product.findById(id)
-    .populate("category")
-    .exec((err, product) => {
-      if (err || !product) {
-        return res.status(400).json({
-          error: "product not found",
-        });
-      }
-      req.product = product;
-      next();
-    });
-};
+exports.deleteProduct = async (req, res) => {
+  const { id } = req.params;
 
-// Delete product
-exports.deleteProduct = async (req, res, next) => {
-  try {
-    await Product.findOneAndDelete({ _id: req.params.id }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se eliminó satisfactoriamente" });
-    });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
-};
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).send("Hubó un problema al eliminar el producto");
 
-exports.photo = (req, res, next) => {
-  if (req.product.photo.data) {
-    res.set("Content-Type", req.product.photo.contentType);
-    return res.send(req.product.photo.data);
-  }
-  next();
+  await Product.findByIdAndDelete(id);
+
+  res.json({ message: "El producto ha sido eliminado" });
 };

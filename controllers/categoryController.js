@@ -1,93 +1,53 @@
 const Category = require("../models/Category");
-const { errorHandler } = require("../helpers/dberrorHandler");
+const mongoose = require("mongoose");
 
-// Create new Category
-exports.newCategory = async (req, res, next) => {
-  // create object Category
+exports.getCategories = async (req, res) => {
   try {
-    const category = new Category(req.body);
-    await category.save((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se creó satisfactoriamente" });
-    });
+    const category = await Category.find();
+    res.status(200).json(category);
   } catch (error) {
-    console.log(error);
-    next();
+    res.status(404).json({
+      message: error.message,
+    });
   }
 };
 
-// Get all categories
-exports.getCategories = async (req, res, next) => {
+exports.createCategory = async (req, res) => {
+  const category = req.body;
+  const category = new Category(category);
   try {
-    await Category.find().exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json(data);
-    });
+    await category.save();
+    res.status(201).json(category);
   } catch (error) {
-    console.log(error);
-    next();
+    res.status(409).json({
+      message: error.message,
+    });
   }
 };
 
-// Get one category
-exports.getCategory = async (req, res, next) => {
-  try {
-    await Category.findById(req.params.id).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json(data);
-    });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
-};
+exports.updateCategory = async (req, res) => {
+  const { id: _id } = req.params;
+  const category = req.body;
+  if (!mongoose.Types.ObjectId.isValid(_id))
+    return res.status(404).send("Hubó un problema al actualizar la categoria");
 
-// Update category
-exports.updateCategory = async (req, res, next) => {
-  try {
-    await Category.findOneAndUpdate({ _id: req.params.id }, req.body, {
+  const updatedCategory = await Category.findByIdAndUpdate(
+    _id,
+    { ...category, _id },
+    {
       new: true,
-    }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.json({ message: "Se actualizó satisfactoriamente " });
-    });
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+    }
+  );
+  res.json(updatedCategory);
 };
 
-// Delete category
-exports.deleteCategory = async (req, res, next) => {
-  try {
-    await Category.findOneAndDelete({ _id: req.params.id }).exec(
-      (err, data) => {
-        if (err) {
-          return res.status(400).json({
-            error: errorHandler(err),
-          });
-        }
-        res.json({ message: "Se eliminó satisfactoriamente" });
-      }
-    );
-  } catch (error) {
-    console.log(error);
-    next();
-  }
+exports.deleteCategory = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).send("Hubó un problema al eliminar la categoria");
+
+  await Category.findByIdAndDelete(id);
+
+  res.json({ message: "La categoria ha sido eliminado" });
 };
