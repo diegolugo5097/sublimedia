@@ -1,3 +1,18 @@
+const multer = require("multer");
+
+let Storage = multer.diskStorage({
+  destination: function (req, file, callback) {
+    callback(null, "./public");
+  },
+  filename: function (req, file, callback) {
+    callback(null, file.fieldname + "_" + Date.now() + "_" + file.originalname);
+  },
+});
+
+let upload = multer({
+  storage: Storage,
+}).single("image");
+
 exports.email = async (req, res) => {
   "use strict";
   const nodemailer = require("nodemailer");
@@ -8,46 +23,49 @@ exports.email = async (req, res) => {
     // Only needed if you don't have a real mail account for testing
     let testAccount = await nodemailer.createTestAccount();
 
-    // create reusable transporter object using the default SMTP transport
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "sublimediaco@gmail.com", // generated ethereal user
-        pass: "xfqnwonwgunzdxos",
-      },
+    upload(req, res, function (err) {
+      if (err) {
+        return res.send("Algo ocurrió");
+      } else {
+        // create reusable transporter object using the default SMTP transport
+        let transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: "sublimediaco@gmail.com", // generated ethereal user
+            pass: "xfqnwonwgunzdxos",
+          },
+        });
+        let mailOptions = {
+          from: req.body.email, // sender address
+          to: "sublimediaco@gmail.com", // list of receivers
+          subject: "Nuevo diseño ✔", // Subject line
+          html: `
+          Correo: ${req.body.email}
+          Nombre: ${req.body.name}
+          Apellido: ${req.body.lastname}
+          Documento: ${req.body.typedocument}
+          Numero documento: ${req.body.document}
+          Numero telefonico: ${req.body.phone}
+          Pedido: ${req.body.description}
+          Direccion: ${req.body.address}
+          `, // html body
+          attachments: [
+            {
+              path: req.file.path,
+            },
+          ],
+        };
+
+        transporter.sendMail(mailOptions, (err, info) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("enviado");
+          }
+        });
+      }
     });
-
-    // send mail with defined transport object
-    let info = await transporter.sendMail({
-      from: req.query.email, // sender address
-      to: "sublimediaco@gmail.com", // list of receivers
-      subject: "Hello ✔", // Subject line
-      html: `
-      Correo: ${req.query.email}
-      Nombre: ${req.query.name}
-      Apellido: ${req.query.lastname}
-      Documento: ${req.query.typedocument}
-      Numero documento: ${req.query.document}
-      Numero telefonico: ${req.query.phone}
-      Pedido: ${req.query.description}
-      Direccion: ${req.query.address}
-      Diseño: <img src=${req.query.image} with="100%"/>
-      `, // html body
-    });
-
-    if (info.messageId) {
-      res.send("email sent");
-    } else {
-      res.send("Error with sending");
-    }
-    console.log("Message sent: %s", info.messageId);
-    // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
-
-    // Preview only available when sending through an Ethereal account
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-    // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
   }
 
-  console.log(req.query.email);
   main().catch(console.error);
 };
