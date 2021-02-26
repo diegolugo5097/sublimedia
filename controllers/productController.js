@@ -12,6 +12,11 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+exports.read = async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  return res.status(200).json(product);
+};
+
 exports.createProduct = async (req, res) => {
   const product = req.body;
   const newProduct = new Product(product);

@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 
 exports.getAboutUs = async (req, res) => {
   try {
-    const aboutUs = await AboutUs.find();
-    res.status(200).json(aboutUs);
+    const abouts = await AboutUs.find();
+    res.status(200).json(abouts);
   } catch (error) {
     res.status(404).json({
       message: error.message,
@@ -13,11 +13,11 @@ exports.getAboutUs = async (req, res) => {
 };
 
 exports.createAboutUs = async (req, res) => {
-  const aboutUs = req.body;
-  const aboutUs = new AboutUs(aboutUs);
+  const abouts = req.body;
+  const newAboutUs = new AboutUs(abouts);
   try {
-    await aboutUs.save();
-    res.status(201).json(aboutUs);
+    await newAboutUs.save();
+    res.status(201).json(newAboutUs);
   } catch (error) {
     res.status(409).json({
       message: error.message,
@@ -27,13 +27,13 @@ exports.createAboutUs = async (req, res) => {
 
 exports.updateAboutUs = async (req, res) => {
   const { id: _id } = req.params;
-  const aboutUs = req.body;
+  const abouts = req.body;
   if (!mongoose.Types.ObjectId.isValid(_id))
     return res.status(404).send("Hubó un problema al actualizar");
 
   const updatedAboutUs = await AboutUs.findByIdAndUpdate(
     _id,
-    { ...aboutUs, _id },
+    { ...abouts, _id },
     {
       new: true,
     }

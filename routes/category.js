@@ -20,7 +20,7 @@ router.post("/create", createCategory);
 router.get("/categories", getCategories);
 
 // // Update category
-router.put("/update/:id", updateCategory);
+router.patch("/update/:id", updateCategory);
 
 // // delete category
 router.delete("/delete/:id", deleteCategory);

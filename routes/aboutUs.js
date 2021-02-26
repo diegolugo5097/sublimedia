@@ -10,7 +10,7 @@ const {
 
 router.post("/create", createAboutUs);
 router.get("/abouts", getAboutUs);
-router.put("/update/:id", updateAboutUs);
+router.patch("/update/:id", updateAboutUs);
 router.delete("/delete/:id", deleteAboutUs);
 
 module.exports = router;

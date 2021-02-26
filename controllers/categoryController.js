@@ -14,10 +14,10 @@ exports.getCategories = async (req, res) => {
 
 exports.createCategory = async (req, res) => {
   const category = req.body;
-  const category = new Category(category);
+  const newcategory = new Category(category);
   try {
-    await category.save();
-    res.status(201).json(category);
+    await newcategory.save();
+    res.status(201).json(newcategory);
   } catch (error) {
     res.status(409).json({
       message: error.message,

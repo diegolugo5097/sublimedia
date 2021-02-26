@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Schema;
 const Schema = mongoose.Schema;
 
 const productSchema = new Schema(
@@ -23,7 +24,9 @@ const productSchema = new Schema(
       maxlength: 32,
     },
     category: {
-      type: String,
+      type: ObjectId,
+      ref: "Category",
+      required: true,
     },
     quantity: {
       type: Number,

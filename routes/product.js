@@ -5,6 +5,7 @@ const {
   updateProduct,
   deleteProduct,
   getProducts,
+  read,
 } = require("../controllers/productController");
 
 /**
@@ -24,5 +25,8 @@ router.patch("/update/:id", updateProduct);
 
 // delete product
 router.delete("/delete/:id", deleteProduct);
+
+// read product
+router.get("/read/:id", read);
 
 module.exports = router;
