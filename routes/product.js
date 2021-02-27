@@ -6,6 +6,7 @@ const {
   deleteProduct,
   getProducts,
   read,
+  readProductCategory,
 } = require("../controllers/productController");
 
 /**
@@ -28,5 +29,8 @@ router.delete("/delete/:id", deleteProduct);
 
 // read product
 router.get("/read/:id", read);
+
+// read product for category
+router.get("/read/productByCategory/:id", readProductCategory);
 
 module.exports = router;

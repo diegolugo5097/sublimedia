@@ -1,6 +1,6 @@
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 const mongoose = require("mongoose");
-
 exports.getProducts = async (req, res) => {
   try {
     const product = await Product.find();
@@ -15,6 +15,25 @@ exports.getProducts = async (req, res) => {
 exports.read = async (req, res) => {
   const product = await Product.findById(req.params.id);
   return res.status(200).json(product);
+};
+
+exports.readProductCategory = async (req, res) => {
+  try {
+    const { id: _id } = req.params;
+    const product = await Product.find();
+    if (mongoose.Types.ObjectId.isValid(_id)) {
+      let products = product.filter((p) => {
+        if (p.category == _id) {
+          return p;
+        }
+      });
+      res.json(products);
+    }
+  } catch (error) {
+    res.status(404).json({
+      message: error.message,
+    });
+  }
 };
 
 exports.createProduct = async (req, res) => {
