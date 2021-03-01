@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const crypto = require("crypto");
 const uuidv1 = require("uuid/v1");
+const { ObjectId } = mongoose.Schema;
 
 const userSchema = new Schema(
   {
@@ -27,9 +28,11 @@ const userSchema = new Schema(
       require: true,
     },
     salt: String,
+   
     role: {
-      type: Number,
-      default: 0,
+      type: ObjectId,
+      ref: "Role",
+      required: true,
     },
   },
   { timestamps: true }
